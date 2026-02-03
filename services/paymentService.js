@@ -35,7 +35,7 @@ async function createPaymentPreference(heroData) {
       }
     };
 
-    const response = await mercadopago.preferences.create(preference);
+    const response = await mercadopago.preferences.create(preference );
     return {
       success: true,
       preferenceId: response.body.id,
