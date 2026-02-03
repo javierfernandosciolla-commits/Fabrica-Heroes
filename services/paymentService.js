@@ -1,13 +1,16 @@
 const mercadopago = require('mercadopago');
 
-// Configurar MercadoPago con el access token
-mercadopago.configure({
-  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN
+// Inicializar MercadoPago con el access token
+const client = new mercadopago.MercadoPagoConfig({
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN
 });
+
+const payment = new mercadopago.Payment(client);
+const preference = new mercadopago.Preference(client);
 
 async function createPaymentPreference(heroData) {
   try {
-    const preference = {
+    const preferenceData = {
       items: [
         {
           title: `Aventura Completa - ${heroData.heroName}`,
@@ -26,20 +29,14 @@ async function createPaymentPreference(heroData) {
         pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/pending`
       },
       auto_return: 'approved',
-      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3000'}/webhook/mercadopago`,
-      metadata: {
-        heroName: heroData.heroName,
-        heroAge: heroData.heroAge,
-        superpower: heroData.superpower,
-        villain: heroData.villain
-      }
+      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3000'}/webhook/mercadopago`
     };
 
-    const response = await mercadopago.preferences.create(preference );
+    const response = await preference.create({ body: preferenceData } );
     return {
       success: true,
-      preferenceId: response.body.id,
-      initPoint: response.body.init_point
+      preferenceId: response.id,
+      initPoint: response.init_point
     };
   } catch (error) {
     console.error('Error creating payment preference:', error);
@@ -52,11 +49,11 @@ async function createPaymentPreference(heroData) {
 
 async function verifyPayment(paymentId) {
   try {
-    const payment = await mercadopago.payment.findById(paymentId);
+    const response = await payment.get(paymentId);
     return {
       success: true,
-      status: payment.body.status,
-      paymentData: payment.body
+      status: response.status,
+      paymentData: response
     };
   } catch (error) {
     console.error('Error verifying payment:', error);
